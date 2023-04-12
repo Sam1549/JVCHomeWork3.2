@@ -2,6 +2,7 @@ package org.example;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -12,7 +13,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import java.io.*;
 
 
-import java.net.URL;
 
 
 public class Main {
@@ -28,23 +28,23 @@ public class Main {
                         .build())
                 .build();
 
-        HttpGet httpGet = new HttpGet(URI_NASA_WITH_KEY);
 
-        CloseableHttpResponse response = httpClient.execute(httpGet);
+
+        CloseableHttpResponse response = httpClient.execute(new HttpGet(URI_NASA_WITH_KEY));
 
         Nasa nasa = mapper.readValue(response.getEntity().getContent(), Nasa.class);
         String URI = nasa.getUrl();
 
-        try (BufferedInputStream in = new BufferedInputStream(new URL(URI).openStream());
-             FileOutputStream fileOutputStream = new FileOutputStream("Image.jpg")) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = in.read(buffer, 0, 1024)) != -1) {
-                fileOutputStream.write(buffer, 0, bytesRead);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        CloseableHttpResponse pictureResponse = httpClient.execute(new HttpGet(nasa.getUrl()));
+        String[] arr = nasa.getUrl().split("/");
+        String file = arr[6];
+        HttpEntity entity = pictureResponse.getEntity();
+        if (entity != null) {
+            FileOutputStream fos = new FileOutputStream(file);
+            entity.writeTo(fos);
+            fos.close();
         }
+
     }
 
 
